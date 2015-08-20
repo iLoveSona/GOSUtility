@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30723.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GOSUtility", "GOSUtility\GOSUtility.vcxproj", "{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "lua\lua.vcxproj", "{C7B72872-C982-4CF4-A6B6-4945416A50A0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Debug|Win32.Build.0 = Debug|Win32
+		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Release|Win32.ActiveCfg = Release|Win32
+		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Release|Win32.Build.0 = Release|Win32
+		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Debug|Win32.Build.0 = Debug|Win32
+		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Release|Win32.ActiveCfg = Release|Win32
+		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
