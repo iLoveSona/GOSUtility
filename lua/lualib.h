@@ -10,6 +10,7 @@
 
 #include "lua.h"
 
+#define os_module
 
 /* Key to file-handle type */
 #define LUA_FILEHANDLE		"FILE*"
@@ -25,7 +26,9 @@ LUALIB_API int (luaopen_table) (lua_State *L);
 LUALIB_API int (luaopen_io) (lua_State *L);
 
 #define LUA_OSLIBNAME	"os"
+#ifdef os_module
 LUALIB_API int (luaopen_os) (lua_State *L);
+#endif
 
 #define LUA_STRLIBNAME	"string"
 LUALIB_API int (luaopen_string) (lua_State *L);

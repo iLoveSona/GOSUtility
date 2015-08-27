@@ -6,6 +6,9 @@
 #include "dirent.h"
 #include <lauxlib.h>
 #include <lua.h>
+#include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
+#pragma comment(lib, "lua5.1.lib")
 
 const int VERSION = 2;
 bool consoleOpen = false;
@@ -108,40 +111,116 @@ static int saveScript(lua_State *L){
 }
 
 static int request(lua_State *L){
-    char cmd[1000];
-    strcpy(cmd, scriptsHome);
-    strcat(cmd, "Common\\curl.exe -ks ");
-    if(!strcmp("github", luaL_checkstring(L, 1))) strcat(cmd, "https://raw.githubusercontent.com/");
-    else if (!strcmp("opgg", luaL_checkstring(L, 1))) strcat(cmd, "http://op.gg/");
-    else if (!strcmp("lolking", luaL_checkstring(L, 1))) strcat(cmd, "http://lolking.net/");
-    else{
-        pr("GOSUtility: forbidden server %s\n", luaL_checkstring(L, 1));
-        lua_pushnil(L);
-        return 1;
-    }
+	char buf[200000] ="";
 
-    strcat(cmd, luaL_checkstring(L, 2));
-    char buf[200000];
-    char buf2[300];
-    FILE *fp;
+	DWORD dwSize = 0;
+	DWORD dwDownloaded = 0;
+	LPSTR pszOutBuffer;
+	BOOL  bResults = FALSE;
+	HINTERNET  hSession = NULL,
+		hConnect = NULL,
+		hRequest = NULL;
 
-    if ((fp = _popen(cmd, "r")) == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
+	// Use WinHttpOpen to obtain a session handle.
+	hSession = WinHttpOpen(L"WinHTTP Example/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS, 0);
 
-    while (fgets(buf2, 300, fp) != NULL) {
-            strcat(buf, buf2);
-    }
+	// Specify an HTTP server.
+	if (hSession)
+		hConnect = WinHttpConnect(hSession, L"raw.githubusercontent.com",
+		INTERNET_DEFAULT_HTTPS_PORT, 0);
 
-    if(_pclose(fp))  {
-        pr("Curl not found or exited with error status\n");
-        lua_pushnil(L);
-        return 1;
-    }
+	// Create an HTTP request handle.
+	char* lua_string = luaL_checkstring(L, 2);
+	wchar_t wtext[300];
+	mbstowcs(wtext, lua_string, strlen(lua_string) + 1);
+	LPCWSTR url = wtext;
+	if (hConnect)
+		//hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/Inspired-gos/scripts/master/testscript1.lua",
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", url,
+		NULL, WINHTTP_NO_REFERER,
+		WINHTTP_DEFAULT_ACCEPT_TYPES,
+		WINHTTP_FLAG_SECURE);
+
+	// Send a request.
+	if (hRequest)
+		bResults = WinHttpSendRequest(hRequest,
+		WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+		WINHTTP_NO_REQUEST_DATA, 0,
+		0, 0);
+
+
+	// End the request.
+	if (bResults)
+		bResults = WinHttpReceiveResponse(hRequest, NULL);
+
+	// Keep checking for data until there is nothing left.
+	if (bResults)
+	{
+		do
+		{
+			// Check for available data.
+			dwSize = 0;
+			if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
+			{
+				printf("Error %u in WinHttpQueryDataAvailable.\n",
+					GetLastError());
+				lua_pushnil(L);
+				return 1;
+			}
+				
+
+			// Allocate space for the buffer.
+			//pszOutBuffer = new char[dwSize + 1];
+			pszOutBuffer = malloc(dwSize + 1);
+			if (!pszOutBuffer)
+			{
+				printf("Out of memory\n");
+				dwSize = 0;
+				lua_pushnil(L);
+				return 1;
+			}
+			else
+			{
+				// Read the data.
+				ZeroMemory(pszOutBuffer, dwSize + 1);
+
+				if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer,
+					dwSize, &dwDownloaded))
+				{
+					printf("Error %u in WinHttpReadData.\n", GetLastError());
+					lua_pushnil(L);
+					return 1;
+				}
+				else
+					//printf("%s", pszOutBuffer);
+					strcat(buf, pszOutBuffer);
+
+				// Free the memory allocated to the buffer.
+				//delete[] pszOutBuffer;
+				free(pszOutBuffer);
+			}
+		} while (dwSize > 0);
+	}
+
+	// Report any errors.
+	if (!bResults)
+	{
+		printf("Error %d has occurred.\n", GetLastError());
+		lua_pushnil(L);
+		return 1;
+	}		
+
+	// Close any open handles.
+	if (hRequest) WinHttpCloseHandle(hRequest);
+	if (hConnect) WinHttpCloseHandle(hConnect);
+	if (hSession) WinHttpCloseHandle(hSession);
+
     lua_pushstring(L, buf);
     memset(buf, 0, 200000);
-    memset(buf2, 0, 300);
+    //memset(buf2, 0, 300);
     return 1;
 }
 

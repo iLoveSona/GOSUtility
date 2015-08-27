@@ -83,7 +83,9 @@
     <ClCompile Include="loadlib.c" />
     <ClCompile Include="lobject.c" />
     <ClCompile Include="lopcodes.c" />
-    <ClCompile Include="loslib.c" />
+    <ClCompile Include="loslib.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="lparser.c" />
     <ClCompile Include="lstate.c" />
     <ClCompile Include="lstring.c" />

@@ -48,9 +48,6 @@
     <ClCompile Include="liolib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="loslib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lstate.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,6 +103,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="print.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="loslib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
