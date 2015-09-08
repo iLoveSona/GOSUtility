@@ -7,12 +7,103 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <winhttp.h>
+#include <psapi.h>
+#include <tlhelp32.h>
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "lua5.1.lib")
+#pragma comment(lib, "Version.lib")
+#pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 2;
+const int VERSION = 3;
 bool consoleOpen = false;
 char scriptsHome[500];
+
+void PrintFileVersion(lua_State *L, LPCTSTR szVersionFile)
+{
+	DWORD  verHandle;
+	UINT   size = 0;
+	LPBYTE lpBuffer = NULL;
+	DWORD  verSize = GetFileVersionInfoSize(szVersionFile, &verHandle);
+
+	if (verSize != 0)
+	{
+		LPSTR verData = malloc(verSize);
+
+		if (GetFileVersionInfo(szVersionFile, verHandle, verSize, verData))
+		{
+			if (VerQueryValue(verData, "\\", (VOID FAR* FAR*)&lpBuffer, &size))
+			{
+				if (size)
+				{
+					VS_FIXEDFILEINFO *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
+					if (verInfo->dwSignature == 0xfeef04bd)
+					{
+
+						// Doesn't matter if you are on 32 bit or 64 bit,
+						// DWORD is always 32 bits, so first two revision numbers
+						// come from dwFileVersionMS, last two come from dwFileVersionLS
+						char result[sizeof(DWORD) * 4 + 4] = "";
+						sprintf_s(result, sizeof(result), "%d.%d.%d.%d",
+							(verInfo->dwFileVersionMS >> 16) & 0xffff,
+							(verInfo->dwFileVersionMS >> 0) & 0xffff,
+							(verInfo->dwFileVersionLS >> 16) & 0xffff,
+							(verInfo->dwFileVersionLS >> 0) & 0xffff
+							);
+						printf(result);
+						lua_pushstring(L, result);
+					}
+				}
+			}
+		}
+		free(verData);
+	}
+}
+
+void getProcessPathByName(lua_State *L, char* name)
+{
+	PROCESSENTRY32 entry;
+	entry.dwSize = sizeof(PROCESSENTRY32);
+
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+	HANDLE processHandle = NULL;
+	TCHAR filename[MAX_PATH];
+
+	if (Process32First(snapshot, &entry) == TRUE)
+	{
+		while (Process32Next(snapshot, &entry) == TRUE)
+		{
+			if (_stricmp(entry.szExeFile, name) == 0)
+			{
+				processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, entry.th32ProcessID);
+
+				if (processHandle != NULL) {
+					if (GetModuleFileNameEx(processHandle, NULL, filename, MAX_PATH) == 0) {
+						printf("Failed to get module filename.\n");
+					}
+					else {
+						printf("Module filename is: %s\n", filename);
+						PrintFileVersion(L, filename);
+					}
+					CloseHandle(processHandle);
+				}
+				else {
+					printf("Failed to open process.\n");
+				}
+			}
+		}
+	}
+	CloseHandle(snapshot);
+}
+
+
+
+static int getLolVersion(lua_State *L){
+	getProcessPathByName(L, "League of Legends.exe");
+	//lua_pushnumber(L, VERSION);
+	return 1;
+}
+
 int endsWith(const char *str, const char *suffix)
 {
     if (!str || !suffix)
@@ -254,6 +345,7 @@ static const luaL_Reg GOSU[] = {{"version", version},
                                 {"request", request},
                                 {"mousePos", mousePos},
                                 {"resolution", resolution},
+								{"getLolVersion", getLolVersion },
                                          {NULL, NULL}};
 __declspec(dllexport)
 int luaopen_GOSUtility (lua_State *L)
