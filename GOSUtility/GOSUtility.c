@@ -69,6 +69,7 @@ void getProcessPathByName(lua_State *L, char* name)
 	HANDLE processHandle = NULL;
 	TCHAR filename[MAX_PATH];
 
+	bool openProcessSuccess = false;
 	if (Process32First(snapshot, &entry) == TRUE)
 	{
 		while (Process32Next(snapshot, &entry) == TRUE)
@@ -80,18 +81,25 @@ void getProcessPathByName(lua_State *L, char* name)
 				if (processHandle != NULL) {
 					if (GetModuleFileNameEx(processHandle, NULL, filename, MAX_PATH) == 0) {
 						printf("Failed to get module filename.\n");
+						lua_pushnil(L);
 					}
 					else {
 						printf("Module filename is: %s\n", filename);
+						openProcessSuccess = true;
 						PrintFileVersion(L, filename);
 					}
 					CloseHandle(processHandle);
 				}
 				else {
 					printf("Failed to open process.\n");
+					lua_pushnil(L);
 				}
 			}
 		}
+	}
+	if (!openProcessSuccess)
+	{
+		lua_pushnil(L);
 	}
 	CloseHandle(snapshot);
 }
@@ -100,7 +108,8 @@ void getProcessPathByName(lua_State *L, char* name)
 
 static int getLolVersion(lua_State *L){
 	getProcessPathByName(L, "League of Legends.exe");
-	//lua_pushnumber(L, VERSION);
+	//getProcessPathByName(L, "notepad.exe");
+	//lua_pushnil(L);
 	return 1;
 }
 
