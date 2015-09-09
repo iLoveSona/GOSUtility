@@ -14,9 +14,18 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 3;
+const int VERSION = 4;
 bool consoleOpen = false;
 char scriptsHome[500];
+
+void pr(char* fmt, ...)
+{
+	if (!consoleOpen) openConsole();
+	va_list args;
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
+}
 
 void PrintFileVersion(lua_State *L, LPCTSTR szVersionFile)
 {
@@ -49,8 +58,8 @@ void PrintFileVersion(lua_State *L, LPCTSTR szVersionFile)
 							(verInfo->dwFileVersionLS >> 16) & 0xffff,
 							(verInfo->dwFileVersionLS >> 0) & 0xffff
 							);
-						printf(result);
 						lua_pushstring(L, result);
+						pr(result);						
 					}
 				}
 			}
@@ -80,19 +89,19 @@ void getProcessPathByName(lua_State *L, char* name)
 
 				if (processHandle != NULL) {
 					if (GetModuleFileNameEx(processHandle, NULL, filename, MAX_PATH) == 0) {
-						printf("Failed to get module filename.\n");
 						lua_pushnil(L);
+						pr("Failed to get module filename.\n");						
 					}
 					else {
-						printf("Module filename is: %s\n", filename);
+						pr("Module filename is: %s\n", filename);
 						openProcessSuccess = true;
 						PrintFileVersion(L, filename);
 					}
 					CloseHandle(processHandle);
 				}
 				else {
-					printf("Failed to open process.\n");
 					lua_pushnil(L);
+					pr("Failed to open process.\n");					
 				}
 			}
 		}
@@ -100,6 +109,7 @@ void getProcessPathByName(lua_State *L, char* name)
 	if (!openProcessSuccess)
 	{
 		lua_pushnil(L);
+		pr("League of Legends.exe not found.\n");		
 	}
 	CloseHandle(snapshot);
 }
@@ -132,14 +142,7 @@ static int openConsole(){
     return 1;
 }
 
-void pr(char* fmt, ...)
-{
-    if(!consoleOpen) openConsole();
-    va_list args;
-    va_start(args,fmt);
-    vprintf(fmt,args);
-    va_end(args);
-}
+
 
 
 static int version(lua_State *L){
