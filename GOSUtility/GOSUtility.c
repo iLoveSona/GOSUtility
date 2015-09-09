@@ -14,9 +14,17 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 4;
+const int VERSION = 5;
 bool consoleOpen = false;
 char scriptsHome[500];
+
+static int openConsole(){
+	FreeConsole();
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	consoleOpen = true;
+	return 1;
+}
 
 void pr(char* fmt, ...)
 {
@@ -90,7 +98,7 @@ void getProcessPathByName(lua_State *L, char* name)
 				if (processHandle != NULL) {
 					if (GetModuleFileNameEx(processHandle, NULL, filename, MAX_PATH) == 0) {
 						lua_pushnil(L);
-						pr("Failed to get module filename.\n");						
+						pr("Failed to get module filename. (%d) \n", GetLastError());
 					}
 					else {
 						pr("Module filename is: %s\n", filename);
@@ -133,17 +141,6 @@ int endsWith(const char *str, const char *suffix)
         return 0;
     return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 }
-
-static int openConsole(){
-    FreeConsole();
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
-    consoleOpen = true;
-    return 1;
-}
-
-
-
 
 static int version(lua_State *L){
     lua_pushnumber (L, VERSION);
@@ -357,7 +354,7 @@ static const luaL_Reg GOSU[] = {{"version", version},
                                 {"request", request},
                                 {"mousePos", mousePos},
                                 {"resolution", resolution},
-								{"getLolVersion", getLolVersion },
+								{"getLolVersion", getLolVersion},
                                          {NULL, NULL}};
 __declspec(dllexport)
 int luaopen_GOSUtility (lua_State *L)
