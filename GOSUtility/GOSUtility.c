@@ -14,7 +14,7 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 5;
+const int VERSION = 6;
 bool consoleOpen = false;
 char scriptsHome[500];
 
@@ -93,7 +93,7 @@ void getProcessPathByName(lua_State *L, char* name)
 		{
 			if (_stricmp(entry.szExeFile, name) == 0)
 			{
-				processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, entry.th32ProcessID);
+				processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, entry.th32ProcessID);
 
 				if (processHandle != NULL) {
 					if (GetModuleFileNameEx(processHandle, NULL, filename, MAX_PATH) == 0) {
