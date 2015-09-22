@@ -18,6 +18,47 @@ const int VERSION = 6;
 bool consoleOpen = false;
 char scriptsHome[500];
 
+/* this keeps our Lua reference to the Lua function */
+int callback_reference = 0;
+
+/* this is called by Lua to register its function */
+int lua_registerCallback(lua_State *L) {
+
+	/* store the reference to the Lua function in a variable to be used later */
+	callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
+
+	return 0;
+}
+
+/* calls our Lua callback function and resets the callback reference */
+void call_callback(lua_State *L) {
+
+	/* push the callback onto the stack using the Lua reference we */
+	/*  stored in the registry */
+	lua_rawgeti(L, LUA_REGISTRYINDEX, callback_reference);
+
+	/* duplicate the value on the stack */
+	/* NOTE: This is unnecessary, but it shows how you keep the */
+	/*  callback for later */
+	lua_pushvalue(L, 1);
+
+	//lua_pushnumber(L, 87);
+	lua_pushstring(L, "test123");
+
+	/* call the callback */
+	/* NOTE: This is using the one we duplicated with lua_pushvalue */
+	if (0 != lua_pcall(L, 1, 0, 0)) {
+		printf("Failed to call the callback!\n %s\n", lua_tostring(L, -1));
+		return;
+	}
+
+	/* get a new reference to the Lua function and store it again */
+	/* NOTE: This is only used in conjunction with the lua_pushvalue */
+	/*  above and can be removed if you remove that */
+	callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+
 static int openConsole(){
 	FreeConsole();
 	AllocConsole();
@@ -143,7 +184,8 @@ int endsWith(const char *str, const char *suffix)
 }
 
 static int version(lua_State *L){
-    lua_pushnumber (L, VERSION);
+	call_callback(L);
+	lua_pushnumber (L, VERSION);	
     return 1;
 }
 
@@ -355,6 +397,7 @@ static const luaL_Reg GOSU[] = {{"version", version},
                                 {"mousePos", mousePos},
                                 {"resolution", resolution},
 								{"getLolVersion", getLolVersion},
+								{ "registerCallback", lua_registerCallback },
                                          {NULL, NULL}};
 __declspec(dllexport)
 int luaopen_GOSUtility (lua_State *L)
