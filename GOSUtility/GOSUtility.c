@@ -19,19 +19,23 @@ bool consoleOpen = false;
 char scriptsHome[500];
 
 /* this keeps our Lua reference to the Lua function */
-int callback_reference = 0;
-
+static int callback_reference = 0;
+static lua_State *Ltemp;
 /* this is called by Lua to register its function */
-int lua_registerCallback(lua_State *L) {
+static int lua_registerCallback(lua_State *L) {
 
 	/* store the reference to the Lua function in a variable to be used later */
 	callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
-
+	//callback_reference = luaL_ref(L, LUA_GLOBALSINDEX);
+	
 	return 0;
 }
 
+char buf[200000] = "";
+
 /* calls our Lua callback function and resets the callback reference */
-void call_callback(lua_State *L) {
+void call_callback(lua_State* L) {
+	//lua_State* Ltemp2 = luaL_newstate();
 
 	/* push the callback onto the stack using the Lua reference we */
 	/*  stored in the registry */
@@ -40,10 +44,13 @@ void call_callback(lua_State *L) {
 	/* duplicate the value on the stack */
 	/* NOTE: This is unnecessary, but it shows how you keep the */
 	/*  callback for later */
-	lua_pushvalue(L, 1);
+	//lua_pushvalue(L, 1);
 
 	//lua_pushnumber(L, 87);
-	lua_pushstring(L, "test123");
+	//lua_pushstring(L, "test123");
+
+	lua_pushstring(L, buf);
+	//memset(buf, 0, 200000);
 
 	/* call the callback */
 	/* NOTE: This is using the one we duplicated with lua_pushvalue */
@@ -55,7 +62,137 @@ void call_callback(lua_State *L) {
 	/* get a new reference to the Lua function and store it again */
 	/* NOTE: This is only used in conjunction with the lua_pushvalue */
 	/*  above and can be removed if you remove that */
-	callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
+	//callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+
+void CALLBACK HttpCallback(HINTERNET hInternet, DWORD * dwContext, DWORD dwInternetStatus, void * lpvStatusInformation, DWORD dwStatusInformationLength)
+{
+	DWORD dwSize;
+	switch (dwInternetStatus)
+	{
+	case WINHTTP_CALLBACK_STATUS_HANDLE_CREATED:
+		//useless callback
+		break;
+
+	case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
+		WinHttpReceiveResponse(hInternet, NULL);
+		break;
+
+	case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
+		//dwSize = *((LPDWORD)lpvStatusInformation);
+		//break;
+	case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
+		WinHttpQueryDataAvailable(hInternet, NULL);
+		break;
+	case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
+
+		dwSize = *((LPDWORD)lpvStatusInformation);
+
+		//read done
+		if (dwSize == 0)
+		{
+			/*printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n");
+			printf("%s", buf);
+			printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n");
+			memset(buf, 0, sizeof buf);*/
+			//call_callback();
+			break;
+		}
+
+		// Allocate space for the buffer.
+		//pszOutBuffer = new char[dwSize + 1];
+		LPSTR pszOutBuffer = malloc(dwSize + 1);
+		if (!pszOutBuffer)
+		{
+			printf("Out of memory\n");
+			dwSize = 0;
+			//lua_pushnil(g_L);
+			return 1;
+		}
+		else
+		{
+			// Read the data.
+			ZeroMemory(pszOutBuffer, dwSize + 1);
+
+			if (!WinHttpReadData(hInternet, (LPVOID)pszOutBuffer,
+				dwSize, NULL))
+			{
+				printf("Error %u in WinHttpReadData.\n", GetLastError());
+				//lua_pushnil(g_L);
+				return 1;
+			}
+			else
+				//printf("%s", pszOutBuffer);
+				strcat(buf, pszOutBuffer);
+
+			// Free the memory allocated to the buffer.
+			//delete[] pszOutBuffer;
+			free(pszOutBuffer);
+		}
+
+
+		// Close any open handles.
+		/*if (hRequest) WinHttpCloseHandle(hRequest);
+		if (hConnect) WinHttpCloseHandle(hConnect);
+		if (hSession) WinHttpCloseHandle(hSession);*/
+
+		//lua_pushstring(g_L, buf);
+		//printf("%s", buf);
+		//memset(buf, 0, 200000);
+		break;
+	default:
+		break;
+	}
+}
+
+static int requestAsync(lua_State *L)
+{
+	Ltemp = L;
+	HINTERNET  hSession = NULL,
+		hConnect = NULL,
+		hRequest = NULL;
+
+	hSession = WinHttpOpen(L"WinHTTP Example/1.0",
+		WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+		WINHTTP_NO_PROXY_NAME,
+		WINHTTP_NO_PROXY_BYPASS,
+		WINHTTP_FLAG_ASYNC);
+
+	WINHTTP_STATUS_CALLBACK theCallback =
+		WinHttpSetStatusCallback
+		(
+		hSession,
+		(WINHTTP_STATUS_CALLBACK)HttpCallback,
+		WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS,
+		NULL
+		);
+
+	// Specify an HTTP server.
+	if (hSession)
+		hConnect = WinHttpConnect(hSession, L"raw.githubusercontent.com",
+		INTERNET_DEFAULT_HTTPS_PORT, 0);
+
+	char* lua_string = luaL_checkstring(L, 2);
+	wchar_t wtext[300];
+	mbstowcs(wtext, lua_string, strlen(lua_string) + 1);
+	LPCWSTR url = wtext;
+	if (hConnect)
+		hRequest = WinHttpOpenRequest(hConnect, L"GET", url,
+		//hRequest = WinHttpOpenRequest(hConnect, L"GET", L"Inspired-gos/scripts/master/testscript1.lua",
+		//hRequest = WinHttpOpenRequest(hConnect, L"GET", url,
+		NULL, WINHTTP_NO_REFERER,
+		WINHTTP_DEFAULT_ACCEPT_TYPES,
+		WINHTTP_FLAG_SECURE);
+
+	// Send a request.
+	if (hRequest)
+		WinHttpSendRequest(hRequest,
+		WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+		WINHTTP_NO_REQUEST_DATA, 0,
+		0, 0);
+
+	return 1;
 }
 
 
@@ -394,6 +531,7 @@ static const luaL_Reg GOSU[] = {{"version", version},
                                 {"closeConsole", closeConsole},
                                 {"saveScript", saveScript},
                                 {"request", request},
+								{ "requestAsync", requestAsync },
                                 {"mousePos", mousePos},
                                 {"resolution", resolution},
 								{"getLolVersion", getLolVersion},
@@ -405,5 +543,6 @@ int luaopen_GOSUtility (lua_State *L)
         strcpy(scriptsHome, getenv("APPDATA"));
         strcat(scriptsHome, "\\GamingOnSteroids\\LOL\\Scripts\\");
         luaL_register(L, "GOSU", GOSU);
+		Ltemp = L;
         return 1;
 }
