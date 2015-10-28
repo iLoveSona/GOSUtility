@@ -65,7 +65,8 @@ void call_callback(lua_State* L) {
 	//callback_reference = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
-
+lua_State* L;
+LPDWORD Lsize = 0;
 void CALLBACK HttpCallback(HINTERNET hInternet, DWORD * dwContext, DWORD dwInternetStatus, void * lpvStatusInformation, DWORD dwStatusInformationLength)
 {
 	DWORD dwSize;
@@ -96,7 +97,19 @@ void CALLBACK HttpCallback(HINTERNET hInternet, DWORD * dwContext, DWORD dwInter
 			printf("%s", buf);
 			printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n");
 			memset(buf, 0, sizeof buf);*/
-			//call_callback();
+			
+			lua_State* L;
+			DWORD dwSize = sizeof(struct lua_State*);
+			bool result = WinHttpQueryOption(
+				hInternet,
+				WINHTTP_OPTION_CONTEXT_VALUE,
+				&L,
+				&dwSize
+				);
+			//tt = data;
+			printf("WinHttpQueryOption error %d\n", GetLastError());
+			//printf("Connection timeout: %u ms\n\n", data);
+			call_callback(dwContext);
 			break;
 		}
 
@@ -145,7 +158,6 @@ void CALLBACK HttpCallback(HINTERNET hInternet, DWORD * dwContext, DWORD dwInter
 		break;
 	}
 }
-
 static int requestAsync(lua_State *L)
 {
 	Ltemp = L;
@@ -184,6 +196,14 @@ static int requestAsync(lua_State *L)
 		NULL, WINHTTP_NO_REFERER,
 		WINHTTP_DEFAULT_ACCEPT_TYPES,
 		WINHTTP_FLAG_SECURE);
+	
+	Lsize = sizeof(struct lua_State *);
+	bool result = WinHttpSetOption(
+		hRequest,
+		WINHTTP_OPTION_CONTEXT_VALUE,
+		&L,
+		sizeof(struct lua_State *)
+		);
 
 	// Send a request.
 	if (hRequest)
