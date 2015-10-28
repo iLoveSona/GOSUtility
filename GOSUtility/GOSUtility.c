@@ -14,7 +14,7 @@
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 6;
+const int VERSION = 7;
 bool consoleOpen = false;
 char scriptsHome[500];
 
@@ -67,7 +67,7 @@ void PrintFileVersion(lua_State *L, LPCTSTR szVersionFile)
 							(verInfo->dwFileVersionLS >> 0) & 0xffff
 							);
 						lua_pushstring(L, result);
-						pr(result);						
+						//pr(result);						
 					}
 				}
 			}
@@ -101,7 +101,7 @@ void getProcessPathByName(lua_State *L, char* name)
 						pr("Failed to get module filename. (%d) \n", GetLastError());
 					}
 					else {
-						pr("Module filename is: %s\n", filename);
+						//pr("Module filename is: %s\n", filename);
 						openProcessSuccess = true;
 						PrintFileVersion(L, filename);
 					}
