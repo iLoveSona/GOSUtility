@@ -109,7 +109,7 @@ void getProcessPathByName(lua_State *L, char* name)
 				}
 				else {
 					lua_pushnil(L);
-					pr("Failed to open process.\n");					
+					pr("Failed to open process. (%d) \n", GetLastError());
 				}
 			}
 		}
