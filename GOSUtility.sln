@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GOSUtility", "GOSUtility\GO
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "lua\lua.vcxproj", "{C7B72872-C982-4CF4-A6B6-4945416A50A0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua5.2.4", "lua5.2.4\lua5.2.4.vcxproj", "{45AED350-209D-4687-8D12-C99A907F1E2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -18,9 +20,12 @@ Global
 		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Release|Win32.ActiveCfg = Release|Win32
 		{098F0C2D-0093-4334-B7AC-E5BF3D5AD69D}.Release|Win32.Build.0 = Release|Win32
 		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Debug|Win32.Build.0 = Debug|Win32
 		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Release|Win32.ActiveCfg = Release|Win32
 		{C7B72872-C982-4CF4-A6B6-4945416A50A0}.Release|Win32.Build.0 = Release|Win32
+		{45AED350-209D-4687-8D12-C99A907F1E2B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{45AED350-209D-4687-8D12-C99A907F1E2B}.Debug|Win32.Build.0 = Debug|Win32
+		{45AED350-209D-4687-8D12-C99A907F1E2B}.Release|Win32.ActiveCfg = Release|Win32
+		{45AED350-209D-4687-8D12-C99A907F1E2B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

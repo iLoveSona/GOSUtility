@@ -10,11 +10,11 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 #pragma comment(lib, "winhttp.lib")
-#pragma comment(lib, "lua5.1.lib")
+#pragma comment(lib, "lua52.lib")
 #pragma comment(lib, "Version.lib")
 #pragma comment(lib, "Psapi.lib")
 
-const int VERSION = 7;
+const int VERSION = 8;
 bool consoleOpen = false;
 char scriptsHome[500];
 
@@ -361,6 +361,13 @@ int luaopen_GOSUtility (lua_State *L)
 {
         strcpy(scriptsHome, getenv("APPDATA"));
         strcat(scriptsHome, "\\GamingOnSteroids\\LOL\\Scripts\\");
-        luaL_register(L, "GOSU", GOSU);
+
+		//rip lua 5.1
+        //luaL_register(L, "GOSU", GOSU);
+
+		//hello lua 5.2
+		lua_newtable(L);
+		luaL_setfuncs(L, GOSU, 0);
+
         return 1;
 }
